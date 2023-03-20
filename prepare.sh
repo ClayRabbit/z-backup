@@ -11,5 +11,5 @@ echo <<EOF
 sudo zfs create "backup/$1"
 sudo adduser "$1" --disabled-password
 sudo zfs allow "$1" snapshot,destroy "backup/$1"
-sudo su "$1" -c "echo '$pubkey' >> '/home/$1/.ssh/authorized_keys
+sudo su "$1" -c "cd '/home/$1' && mkdir -pm700 .ssh && echo '$pubkey' >> .ssh/authorized_keys"
 EOF
