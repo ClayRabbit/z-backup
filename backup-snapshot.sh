@@ -1,5 +1,7 @@
 #!/bin/sh
-[ -z "$1" -o -z "$2" ] && exit 1
+# after backup is finished this script will be executed on remote server to create new snapshot and prune expired snapshots
+
+[ -z "$1" -o -z "$2" ] && echo not enough arguments && exit 1
 POOL="$1"
 EXPIRE="$2"
 NOW=$(date +%s)
@@ -9,6 +11,6 @@ EXPIRE=$(expr "$NOW" + "$EXPIRE" * 24 * 60 * 60)
 zfs snapshot "$POOL@$DATE-$EXPIRE"
 for SNAP in $(zfs list -t snapshot -o name | grep "^$POOL@"); do
     EXPIRE=${SNAP##*-}
-    [ $EXPIRE -gt 0 ] || continue
+    [[ $EXPIRE -gt 0 ]] || continue
     [ $EXPIRE -lt $NOW ] && zfs destroy "$SNAP"
 done

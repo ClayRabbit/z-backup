@@ -1,16 +1,31 @@
 #!/bin/sh
-[ -z "$1" ] && exit 1
-pgrep backup.sh |grep -v "^$$\$" && echo already running && exit 2
+pgrep backup.sh |grep -v "^$$\$" && echo already running && exit 1
 
-#ssh://user@hostname:port/backup/dir
-DEST="$1"
-POOL="$2"
+if [ -n "$1" ]; then
+    CFG="$1"
+else
+    CFG="backup.conf"
+fi
+[ ! -e "$CFG" ] && echo "$CFG" not found && exit 2
+
+. $(realpath "$CFG")
+
+[ -z "$DESTINATION" ] && echo destination not specified && exit 3
+DEST="$DESTINATION"
+
+SRC="$SOURCE"
+if [ -z "$SRC" ]; then
+    SRC="/"
+fi
+
 if [ -z "$POOL" ]; then
     POOL=${DEST#*//}
     POOL=${POOL#*/}
 fi
-LOG="/var/log/backup.log"
+
 BASEDIR=$(dirname "$0")
+
+LOG="$(basename "$CFG" .conf).log"
 
 for i in $(seq 8 -1 1); do
     if [ -e "$LOG.$i.gz" ]; then
@@ -21,14 +36,14 @@ done
 [ -e "$LOG" ] && gzip "$LOG" && mv "$LOG.gz" "$LOG.1.gz"
 
 "$BASEDIR/backup-mysql.sh" "$DEST" >"$LOG"
-nice -n19 "$BASEDIR/backup-rsync.sh" "$DEST" >>"$LOG"
+nice -n19 "$BASEDIR/backup-rsync.sh" "$SRC" "$DEST" >>"$LOG"
 
 if [ "$(date +\%d)" = "01" ]; then #Monthly backup
-    EXPIRE=60
+    EXPIRE="$MONTHLY_EXPIRE"
 elif [ "$(date +\%u)" = "7" ]; then #Weekly backup
-    EXPIRE=30
+    EXPIRE="$WEEKLY_EXPIRE"
 else #Daily backup
-    EXPIRE=8
+    EXPIRE="$DAILY_EXPIRE"
 fi
 
-cat "$BASEDIR/backup-snapshot.sh" | ssh -c "ssh -s '$POOL' '$EXPIRE' '$STATUS'" "$DEST" >>"$LOG"
+cat "$BASEDIR/backup-snapshot.sh" | ssh -c "sh -s '$POOL' '$EXPIRE' >>"$LOG"
