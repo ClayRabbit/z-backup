@@ -4,7 +4,8 @@ umask 066
 DEST="$1"
 BKDIR=${DEST#*//}
 BKDIR="/${BKDIR#*/}/m"
-TMPFILE="/var/tmp/backup.sql.gz"
+HASH=$(echo "$1" | md5sum | cut -f1 -d" ")
+TMPFILE="/var/tmp/backup_$hash.sql.gz"
 FILES=$(ssh -c "find '$BKDIR'" "$DEST")
 
 for db in $(mysql -Nse "SHOW DATABASES"); do
@@ -25,4 +26,3 @@ for db in $(mysql -Nse "SHOW DATABASES"); do
     done
 done
 #echo "$FILES" | grep -q / && echo "$FILES" | ssh -c "xargs -l -t rm -fv
-    
