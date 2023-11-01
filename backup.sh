@@ -15,7 +15,11 @@ DEST="$DESTINATION"
 
 SRC="$SOURCE"
 if [ -z "$SRC" ]; then
-    SRC="/"
+    if [ "$UID" = "0" ];
+        SRC="/"
+    else
+        SRC="$HOME"
+    fi
 fi
 
 if [ -z "$POOL" ]; then
