@@ -4,7 +4,7 @@
 USER="$1"
 if [ "$USER" == "" ]; then
     USER=$(whoami)
-    if [ "${USER%root}" != "$USER" ];
+    if [ "${USER%root}" != "$USER" ]; then
         USER=$(hostname -s)
     fi
     read -p "\"$USER\" will be used as remote username. Generate ssh key and remote commands? " YN
