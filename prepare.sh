@@ -17,12 +17,12 @@ fi
 [ -e "~/.ssh/backup.key" ] && echo "~/.ssh/backup-$USER.key" already exist! && exit 2
 
 ssh-keygen -t rsa -N "" -f ~/.ssh/"backup-$USER.key"
-PUBKEY=$(cat ~/.ssh/backup.key)
+PUBKEY=$(cat ~/.ssh/"backup-$USER.key")
 
-echo <<EOF
+cat <<EOF
 # execute following commands on backup server (assuming "backup" is zfs pool for backups):
 sudo zfs create "backup/$USER" \
-&& sudo adduser "$USER" --disabled-password \
+&& sudo adduser "$USER" --disabled-password --comment "" \
 && sudo zfs allow "$USER" snapshot,destroy "backup/$USER" \
 && sudo su "$USER" -c "cd '/home/$USER' && mkdir -pm700 .ssh && echo '$PUBKEY' >> .ssh/authorized_keys"
 EOF
