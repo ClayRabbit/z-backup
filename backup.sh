@@ -1,6 +1,7 @@
 #!/bin/sh
 pgrep backup.sh |grep -v "^$$\$" && echo already running && exit 1
 
+exec 2>&1
 BASEDIR=$(dirname "$0")
 
 if [ -n "$1" ]; then
@@ -22,7 +23,7 @@ if [ -z "$SRC" ]; then
     if [ "$UID" = "0" ]; then
         SRC="/"
     else
-        SRC="$HOME"
+        SRC="$HOME/"
     fi
 fi
 
@@ -46,10 +47,10 @@ done
 [ -e "$LOG" ] && gzip "$LOG" && mv "$LOG.gz" "$LOG.1.gz"
 
 echo "### mysql backup $(date) ###" >"$LOG"
-(cd "$BASEDIR" && "./backup-mysql.sh" "$MYSQL_USER" "$MYSQL_PASS" "$BACKUP_LOGIN@$BACKUP_HOST" "$BACKUP_PATH" "$SSH") >>"$LOG"
+(cd "$BASEDIR" && "./backup-mysql.sh" "$MYSQL_USER" "$MYSQL_PASS" "$BACKUP_LOGIN@$BACKUP_HOST" "$BACKUP_PATH" "$SSH") >>"$LOG" 2>&1
 
 echo "### files backup $(date) ###" >>"$LOG"
-(cd "$BASEDIR" && nice -n19 "./backup-rsync.sh" "$SRC" "$BACKUP_LOGIN@$BACKUP_HOST:$BACKUP_PATH" "$SSH") >>"$LOG"
+(cd "$BASEDIR" && nice -n19 "./backup-rsync.sh" "$SRC" "$BACKUP_LOGIN@$BACKUP_HOST:$BACKUP_PATH" "$SSH") >>"$LOG" 2>&1
 
 if [ "$(date +\%d)" = "01" ]; then #Monthly backup
     EXPIRE="$MONTHLY_EXPIRE"
@@ -60,6 +61,6 @@ else #Daily backup
 fi
 
 echo "### snapshots $(date) ###" >>"$LOG"
-cat "$BASEDIR/backup-snapshot.sh" | $SSH "$BACKUP_HOST" "/bin/sh -s '$BACKUP_POOL' '$EXPIRE'" >>"$LOG"
+cat "$BASEDIR/backup-snapshot.sh" | $SSH "$BACKUP_LOGIN@$BACKUP_HOST" "/bin/sh -s '$BACKUP_POOL' '$EXPIRE'" >>"$LOG" 2>&1
 
 echo "### finished $(date) ###" >>"$LOG"
