@@ -1,7 +1,6 @@
 #!/bin/sh
 pgrep backup.sh |grep -v "^$$\$" && echo already running && exit 1
 
-exec 2>&1
 BASEDIR=$(dirname "$0")
 
 if [ -n "$1" ]; then
