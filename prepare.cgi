@@ -21,10 +21,12 @@ if [ "$USER" == "" ]; then
         esac
     fi
 fi
-[ -e ~/.ssh/"backup-$USER.key" ] && echo ~/.ssh/"backup-$USER.key" already exist! && exit 2
+#[ -e ~/.ssh/"backup-$USER.key" ] && echo ~/.ssh/"backup-$USER.key" already exist! && exit 2
 
 ssh-keygen -t rsa -N "" -f ~/.ssh/"backup-$USER.key"
-PUBKEY=$(cat ~/.ssh/"backup-$USER.key")
+PUBKEY=$(cat ~/.ssh/"backup-$USER.key.pub")
+
+[ $? != 0 ] && exit $?
 
 cat <<EOF
 # execute following commands on backup server (assuming "backup" is zfs pool for backups):
