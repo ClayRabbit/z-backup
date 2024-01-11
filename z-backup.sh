@@ -58,16 +58,15 @@ if [ -n "$CRON_BACKUP" ]; then
 fi
 (cd "$BASEDIR" && nice -n19 "./z-backup.rsync.sh" "$SRC" "$BACKUP_LOGIN@$BACKUP_HOST:$BACKUP_PATH" "$SSH") >>"$LOG"
 
-if [ "$(date +\%d)" = "01" ]; then #Monthly backup
-    EXPIRE="$MONTHLY_EXPIRE"
-elif [ "$(date +\%u)" = "7" ]; then #Weekly backup
-    EXPIRE="$WEEKLY_EXPIRE"
-else #Daily backup
-    EXPIRE="$DAILY_EXPIRE"
-fi
-
 if [ -n "$BACKUP_POOL" ]; then
     echo "### snapshots $(date) ###" >>"$LOG"
+    if [ "$(date +\%d)" = "01" ]; then #Monthly backup
+        EXPIRE="$MONTHLY_EXPIRE"
+    elif [ "$(date +\%u)" = "7" ]; then #Weekly backup
+        EXPIRE="$WEEKLY_EXPIRE"
+    else #Daily backup
+        EXPIRE="$DAILY_EXPIRE"
+    fi
     cat "$BASEDIR/z-backup.snapshot.sh" | $SSH "$BACKUP_LOGIN@$BACKUP_HOST" "/bin/sh -s '$BACKUP_POOL' '$EXPIRE'" >>"$LOG"
 fi
 
