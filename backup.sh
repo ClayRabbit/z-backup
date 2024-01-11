@@ -45,11 +45,19 @@ for i in $(seq 8 -1 1); do
 done
 [ -e "$LOG" ] && gzip "$LOG" && mv "$LOG.gz" "$LOG.1.gz"
 
-echo "### mysql backup $(date) ###" >"$LOG"
-(cd "$BASEDIR" && "./backup-mysql.sh" "$MYSQL_USER" "$MYSQL_PASS" "$BACKUP_LOGIN@$BACKUP_HOST" "$BACKUP_PATH" "$SSH") >>"$LOG" 2>&1
+if [ -n "$MYSQL_USER" ]; then
+    echo "### mysql backup $(date) ###" >"$LOG"
+    (cd "$BASEDIR" && "./backup-mysql.sh" "$MYSQL_USER" "$MYSQL_PASS" "$BACKUP_LOGIN@$BACKUP_HOST" "$BACKUP_PATH" "$SSH") >>"$LOG"
+fi
 
 echo "### files backup $(date) ###" >>"$LOG"
-(cd "$BASEDIR" && nice -n19 "./backup-rsync.sh" "$SRC" "$BACKUP_LOGIN@$BACKUP_HOST:$BACKUP_PATH" "$SSH") >>"$LOG" 2>&1
+if [ -n "$CRON_BACKUP" ]; then
+    CRON=$(crontab -l 2>/dev/null)
+    if [ -n "$CRON" ]; then
+        echo "$CRON" | cmp -s - "$SRC/$CRON_BACKUP" || echo "$CRON" >"$SRC/$CRON_BACKUP"
+    fi
+fi
+(cd "$BASEDIR" && nice -n19 "./backup-rsync.sh" "$SRC" "$BACKUP_LOGIN@$BACKUP_HOST:$BACKUP_PATH" "$SSH") >>"$LOG"
 
 if [ "$(date +\%d)" = "01" ]; then #Monthly backup
     EXPIRE="$MONTHLY_EXPIRE"
@@ -60,6 +68,6 @@ else #Daily backup
 fi
 
 echo "### snapshots $(date) ###" >>"$LOG"
-cat "$BASEDIR/backup-snapshot.sh" | $SSH "$BACKUP_LOGIN@$BACKUP_HOST" "/bin/sh -s '$BACKUP_POOL' '$EXPIRE'" >>"$LOG" 2>&1
+cat "$BASEDIR/backup-snapshot.sh" | $SSH "$BACKUP_LOGIN@$BACKUP_HOST" "/bin/sh -s '$BACKUP_POOL' '$EXPIRE'" >>"$LOG"
 
 echo "### finished $(date) ###" >>"$LOG"
