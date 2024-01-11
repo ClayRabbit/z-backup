@@ -1,12 +1,12 @@
 #!/bin/sh
-pgrep backup.sh |grep -v "^$$\$" && echo already running && exit 1
+pgrep "-u$(id -u)" z-backup.sh |grep -v "^$$\$" && echo already running && exit 1
 
 BASEDIR=$(dirname "$0")
 
 if [ -n "$1" ]; then
     CFG="$1"
 else
-    CFG="$BASEDIR/backup.conf"
+    CFG="$BASEDIR/z-backup.conf"
 fi
 [ ! -e "$CFG" ] && echo "$CFG" not found && exit 2
 
@@ -47,7 +47,7 @@ done
 
 if [ -n "$MYSQL_USER" ]; then
     echo "### mysql backup $(date) ###" >"$LOG"
-    (cd "$BASEDIR" && "./backup-mysql.sh" "$MYSQL_USER" "$MYSQL_PASS" "$BACKUP_LOGIN@$BACKUP_HOST" "$BACKUP_PATH" "$SSH") >>"$LOG"
+    (cd "$BASEDIR" && "./z-backup.mysql.sh" "$MYSQL_USER" "$MYSQL_PASS" "$BACKUP_LOGIN@$BACKUP_HOST" "$BACKUP_PATH" "$SSH") >>"$LOG"
 fi
 
 echo "### files backup $(date) ###" >>"$LOG"
@@ -57,7 +57,7 @@ if [ -n "$CRON_BACKUP" ]; then
         echo "$CRON" | cmp -s - "$SRC/$CRON_BACKUP" || echo "$CRON" >"$SRC/$CRON_BACKUP"
     fi
 fi
-(cd "$BASEDIR" && nice -n19 "./backup-rsync.sh" "$SRC" "$BACKUP_LOGIN@$BACKUP_HOST:$BACKUP_PATH" "$SSH") >>"$LOG"
+(cd "$BASEDIR" && nice -n19 "./z-backup.rsync.sh" "$SRC" "$BACKUP_LOGIN@$BACKUP_HOST:$BACKUP_PATH" "$SSH") >>"$LOG"
 
 if [ "$(date +\%d)" = "01" ]; then #Monthly backup
     EXPIRE="$MONTHLY_EXPIRE"
@@ -68,6 +68,6 @@ else #Daily backup
 fi
 
 echo "### snapshots $(date) ###" >>"$LOG"
-cat "$BASEDIR/backup-snapshot.sh" | $SSH "$BACKUP_LOGIN@$BACKUP_HOST" "/bin/sh -s '$BACKUP_POOL' '$EXPIRE'" >>"$LOG"
+cat "$BASEDIR/z-backup.snapshot.sh" | $SSH "$BACKUP_LOGIN@$BACKUP_HOST" "/bin/sh -s '$BACKUP_POOL' '$EXPIRE'" >>"$LOG"
 
 echo "### finished $(date) ###" >>"$LOG"
