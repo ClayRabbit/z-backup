@@ -15,7 +15,6 @@ fi
 [ -z "$BACKUP_HOST" ] && echo backup host not specified && exit 3
 [ -z "$BACKUP_LOGIN" ] && echo backup login not specified && exit 3
 [ -z "$BACKUP_PATH" ] && echo backup path not specified && exit 3
-[ -z "$BACKUP_POOL" ] && echo backup pool not specified && exit 3
 
 SRC="$SOURCE"
 if [ -z "$SRC" ]; then
@@ -67,7 +66,9 @@ else #Daily backup
     EXPIRE="$DAILY_EXPIRE"
 fi
 
-echo "### snapshots $(date) ###" >>"$LOG"
-cat "$BASEDIR/z-backup.snapshot.sh" | $SSH "$BACKUP_LOGIN@$BACKUP_HOST" "/bin/sh -s '$BACKUP_POOL' '$EXPIRE'" >>"$LOG"
+if [ -n "$BACKUP_POOL" ]; then
+    echo "### snapshots $(date) ###" >>"$LOG"
+    cat "$BASEDIR/z-backup.snapshot.sh" | $SSH "$BACKUP_LOGIN@$BACKUP_HOST" "/bin/sh -s '$BACKUP_POOL' '$EXPIRE'" >>"$LOG"
+fi
 
 echo "### finished $(date) ###" >>"$LOG"
