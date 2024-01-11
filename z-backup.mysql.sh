@@ -13,22 +13,25 @@ if [ -n "$5" ]; then
 fi
 MYSQL="mysql"
 MYSQLDUMP="mysqldump"
-if [ -n "MYSQL_USER" ]; then
+if [ -n "$MYSQL_USER" ]; then
     MYSQL="$MYSQL -u$MYSQL_USER"
     MYSQLDUMP="$MYSQLDUMP -u$MYSQL_USER"
 fi
-if [ -n "MYSQL_USER" ]; then
+if [ -n "$MYSQL_PWD" ]; then
     export MYSQL_PWD
     MYSQL="$MYSQL -p$MYSQL_PWD"
     MYSQLDUMP="$MYSQLDUMP -p$MYSQL_PWD"
 fi
 
 TMPFILE=$(mktemp /var/tmp/backup_XXXXXXXXXX)
+
 FILES=$($SSH "$BACKUP_HOST" "[ ! -e $BKDIR ] && mkdir $BKDIR || find $BKDIR -type f")
 [ $? -ne 0 ] && echo "! Can't list remote files" && exit 1
 
-for db in $($MYSQL -Nse "SHOW DATABASES" 2>/dev/null); do
-    [ $? -ne 0 ] && echo "! Can't get database '$db' list" && exit 1
+DATABASES=$($MYSQL -Nse "SHOW DATABASES" 2>/dev/null)
+[ $? -ne 0 ] && echo "! Can't get database list" && exit 2
+
+for db in $DATABASES; do
     [ "$db" = "sys" -o "$db" = "information_schema" -o "$db" = "performance_schema" ] && continue
     if echo "$FILES" | grep -q "^$BKDIR/$db\$"; then
         FILES=$(echo "$FILES" | grep -v "^$BKDIR/$db\$")
