@@ -46,7 +46,7 @@ done
 
 if [ -n "$MYSQL_USER" ]; then
     echo "### mysql backup $(date) ###" >"$LOG"
-    (cd "$BASEDIR" && "./z-backup.mysql.sh" "$MYSQL_USER" "$MYSQL_PASS" "$BACKUP_LOGIN@$BACKUP_HOST" "$BACKUP_PATH" "$SSH") >>"$LOG"
+    (cd "$BASEDIR" && sh ./z-backup.mysql.sh "$MYSQL_USER" "$MYSQL_PASS" "$BACKUP_LOGIN@$BACKUP_HOST" "$BACKUP_PATH" "$SSH") >>"$LOG"
 fi
 
 echo "### files backup $(date) ###" >>"$LOG"
@@ -56,7 +56,7 @@ if [ -n "$CRON_BACKUP" ]; then
         echo "$CRON" | cmp -s - "$SRC/$CRON_BACKUP" || echo "$CRON" >"$SRC/$CRON_BACKUP"
     fi
 fi
-(cd "$BASEDIR" && nice -n19 "./z-backup.rsync.sh" "$SRC" "$BACKUP_LOGIN@$BACKUP_HOST:$BACKUP_PATH" "$SSH") >>"$LOG"
+(cd "$BASEDIR" && nice -n19 sh ./z-backup.rsync.sh "$SRC" "$BACKUP_LOGIN@$BACKUP_HOST:$BACKUP_PATH" "$SSH") >>"$LOG"
 
 if [ -n "$BACKUP_POOL" ]; then
     echo "### snapshots $(date) ###" >>"$LOG"
