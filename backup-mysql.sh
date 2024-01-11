@@ -24,7 +24,7 @@ if [ -n "MYSQL_USER" ]; then
 fi
 
 TMPFILE=$(mktemp /var/tmp/backup_XXXXXXXXXX)
-FILES=$($SSH "$BACKUP_HOST" "[ ! -e $BKDIR ] && mkdir $BKDIR || find $BKDIR")
+FILES=$($SSH "$BACKUP_HOST" "[ ! -e $BKDIR ] && mkdir $BKDIR || find $BKDIR -type f")
 [ $? -ne 0 ] && echo "! Can't list remote files" && exit 1
 
 for db in $($MYSQL -Nse "SHOW DATABASES" 2>/dev/null); do
@@ -38,11 +38,11 @@ for db in $($MYSQL -Nse "SHOW DATABASES" 2>/dev/null); do
     for table in $($MYSQL -Nse "SHOW TABLES" "$db" 2>/dev/null); do
         [ "$db" = "mysql" ] && [ "$table" = "general_log" -o "$table" = "slow_log" ] && continue
         FILES=$(echo "$FILES" | grep -v "^$BKDIR/$db/$table.sql\$")
-        echo -n "$db.$table: "
         $MYSQLDUMP --skip-extended-insert --skip-dump-date --default-character-set=utf8 "$db" "$table" 2>/dev/null | gzip >"$TMPFILE" || continue
         cat "$TMPFILE" | $SSH "$BACKUP_HOST" "gunzip -c > '$BKDIR/tmp.sql' && ! cmp --silent '$BKDIR/tmp.sql' '$BKDIR/$db/$table.sql' \
-            && mv -f '$BKDIR/tmp.sql' '$BKDIR/$db/$table.sql' && echo 'dumped' || (echo 'not changed' && rm -f '$BKDIR/tmp.sql')"
+            && mv -f '$BKDIR/tmp.sql' '$BKDIR/$db/$table.sql' && echo '$db.$table' || rm -f '$BKDIR/tmp.sql'"
         rm -f "$TMPFILE"
     done
 done
-#echo "$FILES" | grep -q / && echo "$FILES" | $SSH "$BACKUP_HOST" "xargs -l -t rm -fv
+
+echo "$FILES" | grep -q / && echo "$FILES" | $SSH "$BACKUP_HOST" "xargs rm -v"
