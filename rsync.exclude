@@ -1,6 +1,7 @@
-zfs_backup/backup.log*
+*z-backup/backup.log*
 logs/*
 backups/*
+*swap.img
 */cache/*
 */cachewebp/*
 */logs/*
