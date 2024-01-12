@@ -31,7 +31,7 @@ PUBKEY=$(cat ~/.ssh/"backup-$USER.key.pub")
 cat <<EOF
 # execute following commands on backup server (assuming "backup" is zfs pool for backups):
 sudo zfs create "backup/$USER" \
-&& sudo adduser "$USER" --disabled-password \
+&& sudo adduser --gecos "" --disabled-password "$USER" \
 && sudo zfs allow "$USER" snapshot,mount "backup/$USER" \
 && sudo chown "$USER" "/backup/$USER" && sudo chmod 700 "/backup/$USER" \
 && sudo su "$USER" -c "cd '/home/$USER' && mkdir -pm700 .ssh && echo '$PUBKEY' >> .ssh/authorized_keys"
