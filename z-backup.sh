@@ -10,6 +10,8 @@ else
 fi
 [ ! -e "$CFG" ] && echo "$CFG" not found && exit 2
 chmod 600 "$CFG"
+[ ! -e "$BASEDIR/rsync.exclude" ] && touch "$BASEDIR/rsync.exclude"
+[ ! -e "$BASEDIR/rsync.include" ] && touch "$BASEDIR/rsync.include"
 
 . $(realpath "$CFG")
 
