@@ -1,7 +1,10 @@
-*z-backup/backup.log*
+*/z-backup.log*
+/var/lib/mysql/*
+/swap.img
+/snap/[cls]*/*/*
+/var/snap/[cls]*/*/*
 logs/*
 backups/*
-*swap.img
 */cache/*
 */cachewebp/*
 */logs/*
