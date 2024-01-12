@@ -9,6 +9,7 @@ else
     CFG="$BASEDIR/z-backup.conf"
 fi
 [ ! -e "$CFG" ] && echo "$CFG" not found && exit 2
+chmod 600 "$CFG"
 
 . $(realpath "$CFG")
 
